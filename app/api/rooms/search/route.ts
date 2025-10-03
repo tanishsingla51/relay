@@ -1,0 +1,51 @@
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "../../auth/[...nextauth]/options";
+import { prisma } from "@/lib/db/client";
+
+// ✅ Create a new room
+export async function POST(req: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Get the user id from the email
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    const body = await req.json();
+    const { roomId } = body;
+
+    if (!roomId || roomId.trim() === "") {
+      return NextResponse.json({ error: "RoomId is required" }, { status: 400 });
+    }
+
+    // Create room
+    const room = await prisma.room.findUnique({
+      where: {
+        id: roomId,
+      },
+    });
+
+    if(!room) {
+        return NextResponse.json({ error: "Room not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({
+      id: room.id,
+      name: room.name,
+      message: " Room fetched successfully",
+    });
+  } catch (error) {
+    console.error("Error creating room:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
