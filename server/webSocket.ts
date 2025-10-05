@@ -5,7 +5,8 @@ import { prisma } from "@/lib/db/client";
 const httpServer = createServer();
 const io = new Server(httpServer, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: process.env.CLIENT_URL || "http://localhost:3000",
+    credentials: true,
     methods: ["GET", "POST"],
   },
 });
@@ -102,3 +103,4 @@ io.on("connection", (socket) => {
 httpServer.listen(4000, () => {
   console.log("WebSocket server running on http://localhost:4000");
 });
+
